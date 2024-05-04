@@ -1,6 +1,8 @@
-<<<<<<< HEAD
+import tkinter as tk
+from tkinter import filedialog, messagebox, ttk
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
 from urllib.parse import quote, urlparse, urljoin, unquote
+from PyQt5.QtWidgets import QFileDialog, QApplication
 from ChromeDriver import WebDriver
 from urllib.parse import urlparse
 from bs4 import BeautifulSoup
@@ -16,16 +18,86 @@ import time
 import sys
 import re
 import os
-import re
+from tkinter import Label, Button, PhotoImage
+from tkinter import messagebox
+from tkinter import font
+from PIL import Image, ImageTk
 
 
-class Search_About_News:
+class SearchAboutNews(tk.Tk):
 
     def __init__(self):
         self.driver = None
         self.current_dir = os.path.dirname(sys.argv[0])
         self.results_folder = os.path.join(self.current_dir, 'RESULTS')
         os.makedirs(self.results_folder, exist_ok=True)
+
+        super().__init__()
+        self.title('News Attack')
+        self.geometry('600x500')
+        self.configure(bg='#282828')
+
+        image = Image.open("una.jpeg")
+        photo = ImageTk.PhotoImage(image)
+        label_image = tk.Label(self, image=photo)
+        label_image.image = photo
+        label_image.pack(pady=10)
+
+        label_tasks = tk.Label(self, text='Select a task to execute:', font=('Arial', 16), bg='#282828', fg='white')
+        label_tasks.pack(pady=10)
+
+        custom_font = font.Font(family="Helvetica", size=12, weight="bold")
+
+        # Button style
+        btn_style = {
+            'bg': '#006400',
+            'fg': 'white',
+            'padx': 10,
+            'pady': 5,
+            'bd': 0,
+            'borderwidth': 0,
+            'highlightthickness': 0,
+            'font': custom_font  # Use custom font
+        }
+
+        def on_enter_task1(e):
+            self.task1_button.config(bg="#004d00")
+
+        def on_leave_task1(e):
+            self.task1_button.config(bg="#006400")
+
+        def on_enter_task2(e):
+            self.task2_button.config(bg="#004d00")
+
+        def on_leave_task2(e):
+            self.task2_button.config(bg="#006400")
+
+        # Task 1 button
+        self.task1_button = Button(self, text='Run Task 1', command=self.execute_task1, **btn_style)
+        self.task1_button.pack(pady=10)
+        self.task1_button.bind("<Enter>", on_enter_task1)
+        self.task1_button.bind("<Leave>", on_leave_task1)
+
+        # Task 2 button
+        self.task2_button = Button(self, text='Run Task 2', command=self.execute_task2, **btn_style)
+        self.task2_button.pack(pady=10)
+        self.task2_button.bind("<Enter>", on_enter_task2)
+        self.task2_button.bind("<Leave>", on_leave_task2)
+
+    def execute_task1(self):
+        try:
+            self.main1()
+            messagebox.showinfo("Task Completed", "Task 1 completed successfully!")
+        except Exception as e:
+            messagebox.showerror('Error', f'An error occurred: {e}')
+
+    def execute_task2(self):
+        try:
+            self.main2()  # Run the main method
+            messagebox.showinfo("Task Completed", "Task 2 completed successfully!")
+        except Exception as e:
+            messagebox.showerror('Error', f'An error occurred: {e}')
+            print(e)
 
     def start_driver(self):
         self.driver = WebDriver.start_driver(self)
@@ -41,8 +113,7 @@ class Search_About_News:
             pass
 
     def get_words_from_file(self, words_file_path):
-        encodings = ['utf-8', 'latin-1', 'utf-16', 'utf-32', 'iso-8859-1',
-                     'windows-1252']
+        encodings = ['utf-8', 'latin-1', 'utf-16', 'utf-32', 'iso-8859-1', 'windows-1252']
         for encoding in encodings:
             try:
                 with open(words_file_path, 'r', encoding=encoding) as file:
@@ -50,8 +121,6 @@ class Search_About_News:
                 return list(set([word.strip() for word in words if word.strip()]))
             except UnicodeDecodeError:
                 continue
-        # If none of the encodings worked
-        raise UnicodeDecodeError("Failed to decode the file using any of the provided encodings.")
 
     def get_domains_from_file(self, words_file_path):
         try:
@@ -63,10 +132,12 @@ class Search_About_News:
                 if domain:
                     domains.append(domain)
             return domains
-        except:
-            print(f'check file words.txt, domains.txt, search.txt not found')
-            time.sleep(10)
-            exit()
+        except FileNotFoundError:
+            print(f'File {words_file_path} not found.')
+            return []
+        except Exception as e:
+            print(f'Error reading file {words_file_path}: {e}')
+            return []
 
     def get_publish_date(self, link):
         requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
@@ -266,125 +337,29 @@ class Search_About_News:
 
         return found_links
 
-    # def main1(self):
-    #
-    #     words = self.get_words_from_file('words.txt')
-    #     file = f'{input('domain file name: ')}.txt'
-    #     links = self.get_domains_from_file(file)
-    #     for word in tqdm(words, desc='Processing words', unit='word'):
-    #         folder_name = f'{word}Task1'.replace(':', '-').replace('"', '')
-    #         folder_path = os.path.join(self.results_folder, folder_name)
-    #         os.makedirs(folder_path, exist_ok=True)
-    #         found_links = self.get_response(words, links, folder_path)
-    #
-    #         driver_pid = self.driver.service.process.pid
-    #         self.killDriverZombies(driver_pid)
-    #         data = []
-    #         for link_data_list in found_links.get(word, []):
-    #             if not link_data_list:
-    #                 data.append({'Link': 'not found', 'Date': 'not found', 'Title': 'not found'})
-    #             else:
-    #                 if isinstance(link_data_list, dict):
-    #                     link_data_list = [link_data_list]
-    #
-    #                 for link_data in link_data_list:
-    #                     link = link_data.get('Link', 'not found')
-    #                     date = link_data.get('Date', 'not found')
-    #                     title = link_data.get('Title', 'not found')
-    #                     if link is None:
-    #                         link = 'not found'
-    #                     if date is None:
-    #                         date = 'not found'
-    #                     if title is None:
-    #                         title = 'not found'
-    #                     data.append({'Link': link, 'Date': date, 'Title': title})
-    #
-    #         excel_path = os.path.join(folder_path, f'links_and_dates.xlsx')
-    #         df = pd.DataFrame(data)
-    #         writer = pd.ExcelWriter(excel_path, engine='xlsxwriter')
-    #         df.to_excel(writer, sheet_name='Sheet1', index=False)
-    #         workbook = writer.book
-    #         worksheet = writer.sheets['Sheet1']
-    #         cell_format = workbook.add_format({'font_color': 'blue', 'underline': True})
-    #         worksheet.set_column('A:Z', 50, cell_format)
-    #         writer._save()
-    #
-    # def main2(self):
-    #
-    #     file = f'{input('search file name: ')}.txt'
-    #     links = self.get_words_from_file(file)
-    #
-    #     words = self.get_words_from_file('words.txt')
-    #
-    #     for word in tqdm(words, desc='Processing words', unit='word'):
-    #         folder_name = f'{word}Task2'.replace(':', '-').replace('"', '').encode('utf-8').decode('utf-8')
-    #         folder_path = os.path.join(self.results_folder, folder_name)
-    #         os.makedirs(folder_path, exist_ok=True)
-    #
-    #         self.start_driver()
-    #         found_links = self.get_searching_links(words, links, folder_path)
-    #         driver_pid = self.driver.service.process.pid
-    #         self.killDriverZombies(driver_pid)
-    #
-    #         data = []
-    #         for link_data_list in found_links.get(word, []):
-    #             if not link_data_list:
-    #                 data.append({'Link': 'not found', 'Date': 'not found', 'Title': 'not found'})
-    #             else:
-    #                 if isinstance(link_data_list, dict):
-    #                     link_data_list = [link_data_list]
-    #
-    #                 for link_data in link_data_list:
-    #                     link = link_data.get('link', 'not found')
-    #                     date = link_data.get('date', 'not found')
-    #                     title = link_data.get('title', 'not found')
-    #                     if date is None:
-    #                         date = 'not found'
-    #                     if title is None:
-    #                         title = 'not found'
-    #                     data.append({'Link': link, 'Date': date, 'Title': title})
-    #
-    #         excel_path = os.path.join(folder_path, f'links_and_dates.xlsx')
-    #         df = pd.DataFrame(data)
-    #         writer = pd.ExcelWriter(excel_path, engine='xlsxwriter')
-    #         df.to_excel(writer, index=False)
-    #
-    #         workbook = writer.book
-    #         worksheet = writer.sheets['Sheet1']
-    #         worksheet.set_column('A:Z', 50)
-    #
-    #         writer._save()
-    #
+    def select_file(self):
+        app = QApplication(sys.argv)
+        file_dialog = QFileDialog()
+        file_dialog.setFileMode(QFileDialog.ExistingFile)
+        file_dialog.setNameFilter("Text files (*.txt)")
+        if file_dialog.exec_():
+            selected_files = file_dialog.selectedFiles()
+            return selected_files[0] if selected_files else None
+        return None
 
-    def main(self, task_number):
+    def main1(self):
         words = self.get_words_from_file('words.txt')
+        file = self.select_file()
+        links = self.get_domains_from_file(file)
 
-        if task_number == 1:
-            domain_file_name = input('domain file name: ')
-            links = self.get_domains_from_file(f'{domain_file_name}.txt')
-            task_description = 'Task 1'
-            folder_suffix = 'Task1'
-        elif task_number == 2:
-            search_file_name = input('search file name: ')
-            links = self.get_words_from_file(f'{search_file_name}.txt')
-            task_description = 'Task 2'
-            folder_suffix = 'Task2'
-        else:
-            print('Invalid task number')
-            return
-
-        for word in tqdm(words, desc=f'Processing words for {task_description}', unit='word'):
-            folder_name = f'{word}{folder_suffix}'.replace(':', '-').replace('"', '')
+        for word in tqdm(words, desc='Processing words', unit='word'):
+            folder_name = f'{word}Task1'.replace(':', '-').replace('"', '')
             folder_path = os.path.join(self.results_folder, folder_name)
             os.makedirs(folder_path, exist_ok=True)
-            if task_number == 1:
-                found_links = self.get_response(words, links, folder_path)
-            elif task_number == 2:
-                self.start_driver()
-                found_links = self.get_searching_links(words, links, folder_path)
-                driver_pid = self.driver.service.process.pid
-                self.killDriverZombies(driver_pid)
+            found_links = self.get_response(words, links, folder_path)
 
+            driver_pid = self.driver.service.process.pid
+            self.killDriverZombies(driver_pid)
             data = []
             for link_data_list in found_links.get(word, []):
                 if not link_data_list:
@@ -405,7 +380,7 @@ class Search_About_News:
                             title = 'not found'
                         data.append({'Link': link, 'Date': date, 'Title': title})
 
-            excel_path = os.path.join(folder_path, f'links_and_dates_{folder_suffix.lower()}.xlsx')
+            excel_path = os.path.join(folder_path, f'links_and_dates.xlsx')
             df = pd.DataFrame(data)
             writer = pd.ExcelWriter(excel_path, engine='xlsxwriter')
             df.to_excel(writer, sheet_name='Sheet1', index=False)
@@ -415,12 +390,52 @@ class Search_About_News:
             worksheet.set_column('A:Z', 50, cell_format)
             writer._save()
 
+    def main2(self):
+
+        file = self.select_file()
+        links = self.get_words_from_file(file)
+        words = self.get_words_from_file('words.txt')
+
+        for word in tqdm(words, desc='Processing words', unit='word'):
+            folder_name = f'{word}Task2'.replace(':', '-').replace('"', '').encode('utf-8').decode('utf-8')
+            folder_path = os.path.join(self.results_folder, folder_name)
+            os.makedirs(folder_path, exist_ok=True)
+
+            self.start_driver()
+            found_links = self.get_searching_links(words, links, folder_path)
+            driver_pid = self.driver.service.process.pid
+            self.killDriverZombies(driver_pid)
+
+            data = []
+            for link_data_list in found_links.get(word, []):
+                if not link_data_list:
+                    data.append({'Link': 'not found', 'Date': 'not found', 'Title': 'not found'})
+                else:
+                    if isinstance(link_data_list, dict):
+                        link_data_list = [link_data_list]
+
+                    for link_data in link_data_list:
+                        link = link_data.get('link', 'not found')
+                        date = link_data.get('date', 'not found')
+                        title = link_data.get('title', 'not found')
+                        if date is None:
+                            date = 'not found'
+                        if title is None:
+                            title = 'not found'
+                        data.append({'Link': link, 'Date': date, 'Title': title})
+
+            excel_path = os.path.join(folder_path, f'links_and_dates.xlsx')
+            df = pd.DataFrame(data)
+            writer = pd.ExcelWriter(excel_path, engine='xlsxwriter')
+            df.to_excel(writer, index=False)
+
+            workbook = writer.book
+            worksheet = writer.sheets['Sheet1']
+            worksheet.set_column('A:Z', 50)
+
+            writer._save()
+
 
 if __name__ == '__main__':
-    bot = Search_About_News()
-    task_number = int(input('Enter task number (1 or 2): '))
-    bot.main(task_number)
-    print('Mission complete')
-    time.sleep(5)
-
-
+    app = SearchAboutNews()
+    app.mainloop()
