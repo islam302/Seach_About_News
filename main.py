@@ -96,8 +96,7 @@ class SearchAboutNews(tk.Tk):
             self.main2()  # Run the main method
             messagebox.showinfo("Task Completed", "Task 2 completed successfully!")
         except Exception as e:
-            messagebox.showerror('Error', f'An error occurred: {e}')
-            print(e)
+            pass
 
     def start_driver(self):
         self.driver = WebDriver.start_driver(self)
@@ -348,11 +347,12 @@ class SearchAboutNews(tk.Tk):
         return None
 
     def main1(self):
+
         words = self.get_words_from_file('words.txt')
         file = self.select_file()
         links = self.get_domains_from_file(file)
 
-        for word in tqdm(words, desc='Processing words', unit='word'):
+        for word in words:
             folder_name = f'{word}Task1'.replace(':', '-').replace('"', '')
             folder_path = os.path.join(self.results_folder, folder_name)
             os.makedirs(folder_path, exist_ok=True)
@@ -360,6 +360,8 @@ class SearchAboutNews(tk.Tk):
 
             driver_pid = self.driver.service.process.pid
             self.killDriverZombies(driver_pid)
+
+
             data = []
             for link_data_list in found_links.get(word, []):
                 if not link_data_list:
@@ -396,7 +398,7 @@ class SearchAboutNews(tk.Tk):
         links = self.get_words_from_file(file)
         words = self.get_words_from_file('words.txt')
 
-        for word in tqdm(words, desc='Processing words', unit='word'):
+        for word in words:
             folder_name = f'{word}Task2'.replace(':', '-').replace('"', '').encode('utf-8').decode('utf-8')
             folder_path = os.path.join(self.results_folder, folder_name)
             os.makedirs(folder_path, exist_ok=True)
